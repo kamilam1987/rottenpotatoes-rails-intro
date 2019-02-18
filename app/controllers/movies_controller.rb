@@ -11,26 +11,28 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @all_ratings = ['G', 'PG', 'PG-13', 'R']
-    case params[:sort]
-    when 'title'
-      # sorts movie title alphabetically
-      @movies = Movie.order('title ASC')
-      @title_hilite = 'hilite'
-    when 'release'
-      # Sorts release date from latest
-      @movies = Movie.order('release_date ASC')
-      @release_hilite = 'hilite'
-    case params[:ratings]
-    when 'rating'
-      # Displays movie on selected rating
-      @movies = Movie.where(rating: params[:ratings].keys)
+    if !session['ratings']
+      session['ratings'] = {'G' =>1, 'PG' =>1, 'PG-13' =>1, 'R'=>1}
     end
+    @all_ratings = ['G', 'PG','PG-13','R']
+    if !params['ratings']
+      params['ratings'] = session['ratings']
+      redirect_to movies_path(:ratings =>session['ratings'], :sort => params[:sort])
     else
-     params[:ratings] ? @movies = Movie.where(rating: params[:ratings].keys):
-     @movies = Movie.all
+      session['ratings'] = params['ratings']
+    end
+    
+    if params['sort'] == 'movies'
+      @sort = :title
+      @movies= Movie.where(rating: params['ratings'].keys).order(:title)
+    elsif params['sort'] == 'release_date'
+      @sort = :release_date
+      @movies = Movie.where(rating: params['ratings'].keys).order(:release_date)
+    else
+     @movies = Movie.where(rating: params['ratings'].keys)
     end
   end
+      
 
   def new
     # default: render 'new' template
